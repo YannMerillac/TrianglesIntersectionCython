@@ -1,0 +1,1 @@
+g++ -g -I ./eigen-3.4.0 run_triangle_intersection.cpp  -o run_triangle_intersection
