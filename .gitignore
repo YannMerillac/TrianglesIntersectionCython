@@ -1,0 +1,6 @@
+.venv/
+build/
+eigen-3.4.0
+aabb_interface.cp*
+triangle_intersection.cp*
+*.vtp

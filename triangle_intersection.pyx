@@ -1,5 +1,6 @@
 import numpy as np
 cimport numpy as cnp
+from libcpp.vector cimport vector
 
 cdef extern from "Eigen/Dense" namespace "Eigen":
 
@@ -24,6 +25,9 @@ cdef extern from "triangle_intersection.hpp":
                                             const MatrixXd &T1_grad, const MatrixXd &T2_grad, const MatrixXd &T3_grad,
                                             const Vector3d &S1, const Vector3d &S2,
                                             const MatrixXd &S1_grad, const MatrixXd &S2_grad)
+    bint triangle_triangle_intersection(const Vector3d &A1, const Vector3d &A2, const Vector3d &A3,
+                                        const Vector3d &B1, const Vector3d &B2, const Vector3d &B3,
+                                        vector[Vector3d] &intersection)
 
 
 cdef Vector3d build_vector3d(double *v3d):
@@ -32,6 +36,17 @@ cdef Vector3d build_vector3d(double *v3d):
     for i in range(3):
         elem = &(result.element(i))
         elem[0] = v3d[i]
+    return result
+
+cdef Vector3d build_vector3d_from_xyz(double x, double y, double z):
+    cdef Vector3d result
+    cdef double* elem
+    elem = &(result.element(0))
+    elem[0] = x
+    elem = &(result.element(1))
+    elem[0] = y
+    elem = &(result.element(2))
+    elem[0] = z
     return result
 
 cdef MatrixXd build_matrixxd(double *data, int n_rows, int n_cols):
@@ -78,4 +93,26 @@ def py_segment_triangle_intersection_grad(cnp.ndarray T1, cnp.ndarray T2, cnp.nd
     for i in range(3):
         for j in range(n_dv):
             output[i, j] = vI_grad.element(i, j)
+    return output
+
+def py_triangle_triangle_intersection(double[:, :] tri1, double[:, :] tri2):
+    cdef int i, j
+    cdef Vector3d A1 = build_vector3d_from_xyz(tri1[0, 0], tri1[0, 1], tri1[0, 2])
+    cdef Vector3d A2 = build_vector3d_from_xyz(tri1[1, 0], tri1[1, 1], tri1[1, 2])
+    cdef Vector3d A3 = build_vector3d_from_xyz(tri1[2, 0], tri1[2, 1], tri1[2, 2])
+    #
+    cdef Vector3d B1 = build_vector3d_from_xyz(tri2[0, 0], tri2[0, 1], tri2[0, 2])
+    cdef Vector3d B2 = build_vector3d_from_xyz(tri2[1, 0], tri2[1, 1], tri2[1, 2])
+    cdef Vector3d B3 = build_vector3d_from_xyz(tri2[2, 0], tri2[2, 1], tri2[2, 2])
+    # result
+    cdef vector[Vector3d] result_inter
+    cdef bint bool_inter = triangle_triangle_intersection(A1, A2, A3, B1, B2, B3, result_inter)
+    if not bool_inter:
+        return []
+    # export result
+    cdef int n_inter_pts = result_inter.size()
+    cdef cnp.ndarray output = np.empty((n_inter_pts, 3), dtype=np.double)
+    for i in range(n_inter_pts):
+        for j in range(3):
+            output[i, j] = result_inter[i].element(j)
     return output

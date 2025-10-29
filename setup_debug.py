@@ -7,14 +7,7 @@ ext = [
         "aabb_interface",
         sources=["./aabb_interface.pyx"],
         include_dirs=[np.get_include(), "./eigen-3.4.0"],
-        extra_compile_args=["-O3", "-mavx", "-ffast-math"],
-        language="c++",
-    ),
-    Extension(
-        "triangle_intersection",
-        sources=["./triangle_intersection.pyx"],
-        include_dirs=[np.get_include(), "./eigen-3.4.0"],
-        extra_compile_args=["-O3", "-mavx", "-ffast-math"],
+        extra_compile_args=["-g"],
         language="c++",
     )
 ]
